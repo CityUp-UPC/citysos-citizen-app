@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 
-class Search extends StatefulWidget {
-  const Search({super.key});
+class News extends StatefulWidget {
+  const News({super.key});
 
   @override
-  State<Search> createState() => _SearchState();
+  State<News> createState() => _NewsState();
 }
 
-class _SearchState extends State<Search> {
+class _NewsState extends State<News> {
   @override
   Widget build(BuildContext context) {
     return const Center(

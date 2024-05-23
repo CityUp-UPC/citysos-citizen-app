@@ -1,6 +1,6 @@
 import 'package:citysos_citizen/views/home_view.dart';
 import 'package:citysos_citizen/views/notifications_view.dart';
-import 'package:citysos_citizen/views/search_view.dart';
+import 'package:citysos_citizen/views/news_view.dart';
 import 'package:citysos_citizen/views/user_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ class _NavbarState extends State<Navbar> {
 
     final views = [
       const Home(),
-      const Search(),
+      const News(),
       const Notifications(),
       const User(),
     ];
@@ -58,7 +58,7 @@ class _NavbarState extends State<Navbar> {
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.newspaper),
             activeIcon: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
