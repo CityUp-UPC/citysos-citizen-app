@@ -66,7 +66,7 @@ class _NavbarState extends State<Navbar> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.search, color: colors.primary),
+                child: Icon(Icons.newspaper, color: colors.primary),
               ),
             ),
             label: 'Noticias',
