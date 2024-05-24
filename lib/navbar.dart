@@ -1,4 +1,5 @@
 import 'package:citysos_citizen/views/home_view.dart';
+import 'package:citysos_citizen/views/login_view.dart';
 import 'package:citysos_citizen/views/notifications_view.dart';
 import 'package:citysos_citizen/views/news_view.dart';
 import 'package:citysos_citizen/views/user_view.dart';
@@ -21,7 +22,7 @@ class _NavbarState extends State<Navbar> {
 
     final views = [
       const Home(),
-      const News(),
+      const Login(),
       const Notifications(),
       const User(),
     ];
