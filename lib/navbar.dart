@@ -2,6 +2,7 @@ import 'package:citysos_citizen/views/home_view.dart';
 import 'package:citysos_citizen/views/login_view.dart';
 import 'package:citysos_citizen/views/notifications_view.dart';
 import 'package:citysos_citizen/views/news_view.dart';
+import 'package:citysos_citizen/views/register_view.dart';
 import 'package:citysos_citizen/views/user_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ class _NavbarState extends State<Navbar> {
     final views = [
       const Home(),
       const Login(),
-      const Notifications(),
+      const Register(),
       const User(),
     ];
 
