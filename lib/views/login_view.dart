@@ -75,9 +75,14 @@ class _LoginState extends State<Login> {
             children: [
               UserInputField(controller: _controller,hint: 'usuario',),
               UserInputField(controller: _controller2, hint: 'contraseña',),
-              ElevatedButton(onPressed: (){print('next');}, child: Icon(Icons.login),)
-
-              ]
+              ElevatedButton(onPressed: (){print('next');}, child: Icon(Icons.login),),
+             Column(
+                 mainAxisAlignment: MainAxisAlignment.start,
+               children: [
+                 Text('¿Nuevo en CitySOS?'),
+              TextButton(onPressed: (){print('registrarse');}, child: Text('Registrate ahora',style: TextStyle(color: Colors.red),))
+             ])
+            ]
 
 
 
