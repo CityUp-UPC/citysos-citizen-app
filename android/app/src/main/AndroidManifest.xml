@@ -1,8 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:label="citysos_citizen"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- Add your Google Maps API key as a meta-data tag -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDXGqCE6Q1B8v2ru5uwX5WxLuSJ-sgCLEc" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

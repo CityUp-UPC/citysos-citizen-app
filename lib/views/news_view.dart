@@ -11,7 +11,8 @@ class _NewsState extends State<News> {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('Search View'),
+      child: Text('News View'),
     );
   }
 }
+
