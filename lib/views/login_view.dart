@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:citysos_citizen/views/register_view.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,6 +36,19 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   AuthService _authService = AuthService();
+  String? _deviceToken;
+
+   @override
+  void initState() {
+    super.initState();
+    _initializeFirebase();
+  }
+
+  Future<void> _initializeFirebase() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    _deviceToken = await messaging.getToken();
+    print("Device Token: $_deviceToken");
+  }
 
   @override
   void dispose() {
@@ -48,8 +62,8 @@ class _LoginState extends State<Login> {
       final username = _controller.text;
       final password = _controller2.text;
 
-      final response = await _authService.login(username, password, 'no-device-token');
-
+      final response = await _authService.login(username, password, _deviceToken ?? 'no-device-token');
+      print(response.body);
       final Map<String, dynamic> tokenData = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (tokenData['token'] != null && tokenData['token'].toString().isNotEmpty) {
