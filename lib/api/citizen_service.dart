@@ -46,4 +46,28 @@ class CitizenService {
       throw Exception('Error fetching data: $e');
     }
   }
+
+  Future<dynamic> updateCitizen(int citizenId, Map<String, dynamic> updateData) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String token = prefs.getString('token') ?? '';
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/$citizenId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to update citizen');
+      }
+    } catch (e) {
+      throw Exception('Error updating data: $e');
+    }
+  }
 }
