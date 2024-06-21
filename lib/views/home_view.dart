@@ -1,11 +1,19 @@
+import 'dart:async';
+
 import 'package:citysos_citizen/api/incident_service.dart';
 import 'package:citysos_citizen/components/active_incident_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../components/panic_button_widget.dart';
+import '../components/address_widget.dart';
+import '../components/location_permission_widget.dart';
+import '../components/pending_incidents_widget.dart';
 import '../config/location_permission_service.dart';
+import '../navbar.dart';
+import '../components/panic_button_widget.dart';
+
+import '../config/auth_provider.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -23,39 +31,51 @@ class _HomeState extends State<Home> {
   List<dynamic>? _incidents;
 
   final IncidentService _incidentService = IncidentService();
-  final LocationPermissionService _locationPermissionService =
-  LocationPermissionService();
+  final LocationPermissionService _locationPermissionService = LocationPermissionService();
+  late Timer _timer;
+
+  late AuthProvider _authProvider;
 
   @override
   void initState() {
     super.initState();
-    _requestLocationPermission();
-    _getPendingIncidents();
+    _authProvider = AuthProvider();
+    _authProvider.addListener(_onAuthProviderChange);
+    _startPolling();
+  }
+
+  @override
+  void dispose() {
+    _authProvider.removeListener(_onAuthProviderChange);
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _onAuthProviderChange() {
+    if (_authProvider.isLoggedIn) {
+      _getPendingIncidents();
+    }
+  }
+
+  void _startPolling() {
+    const pollInterval = Duration(seconds: 5);
+    _timer = Timer.periodic(pollInterval, (timer) {
+      if (_authProvider.isLoggedIn) {
+        _getPendingIncidents();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.crisis_alert_rounded,
-                color: Colors.white,
-              ),
-              onPressed: () {},
-            ),
-            const SizedBox(width: 8.0),
-            Text(
-              'Emergencia',
-              style: TextStyle(
-                fontSize: 20.0,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 8.0),
-          ],
+        title: Text(
+          'Emergencia',
+          style: TextStyle(
+            fontSize: 20.0,
+            color: Colors.white,
+          ),
         ),
         backgroundColor: Colors.red,
       ),
@@ -67,35 +87,205 @@ class _HomeState extends State<Home> {
             Center(
               child: CircularProgressIndicator(),
             ),
-          if (_incidents != null && _incidents!.isNotEmpty)
+          if (_incidents != null && _incidents!.isNotEmpty) ...[
             PendingIncidentsWidget(
               onViewIncidents: () {
                 Navigator.pushNamed(context, '/incidents');
               },
             ),
-          if (_incidents != null && _incidents!.isNotEmpty)
             ActiveIncidentWidget(
               incident: _incidents![0],
             ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navbar.of(context)?.setIndex(1);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                        ),
+                        child: const Text('Ver feed de incidente'),
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Dismissible(
+                        key: UniqueKey(),
+                        direction: DismissDirection.horizontal,
+                        confirmDismiss: (DismissDirection direction) async {
+                          bool confirm = await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Confirmación"),
+                                content: const Text(
+                                    "¿Está seguro que desea cancelar este incidente?"),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: Text("Cancelar"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(true);
+                                      _cancelIncident();
+                                    },
+                                    child: Text("Aceptar"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          return confirm;
+                        },
+                        onDismissed: (direction) {
+                          if (direction == DismissDirection.endToStart) {
+                            _cancelIncident();
+                          }
+                        },
+                        background: Container(
+                          color: Colors.redAccent.withOpacity(0.2),
+                          child: const Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding:
+                              EdgeInsets.symmetric(horizontal: 20.0),
+                              child: Icon(
+                                Icons.cancel,
+                                color: Colors.redAccent,
+                                size: 32.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 20.0),
+                          child: const Center(
+                            child: Text(
+                              'Cancelar incidente',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           if (_incidents == null || _incidents!.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: PanicButtonWidget(
                   isLoading: _isLoading,
-                  color: Colors.red, icon: Icons.crisis_alert,size: 240,
+                  color: Colors.red,
+                  icon: Icons.crisis_alert,
+                  size: 240,
                   onPressed: () => _handleEmergencyButtonPressed(),
                 ),
               ),
             ),
-          if (isLocationPermissionGranted() == null ||
-              isLocationPermissionGranted() == false)
-            LocationPermissionWidget(
-              onRequestPermission: () => _requestLocationPermission(),
-            ),
+          FutureBuilder<bool>(
+            future: isLocationPermissionGranted(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || !snapshot.data!) {
+                return LocationPermissionWidget(
+                  onRequestPermission: () => _requestLocationPermission(),
+                );
+              }
+              return SizedBox.shrink(); // Return an empty widget if permission is granted
+            },
+          ),
         ],
       ),
     );
+  }
+
+  void _cancelIncident() {
+    if (_incidents != null && _incidents!.isNotEmpty) {
+      int? incidentId = _incidents![0]['id'] as int?;
+      _incidentService.completeIncidentById(incidentId as int).then((response) {
+        if (response == true) {
+          setState(() {
+            _incidents = null;
+          });
+          _getPendingIncidents();
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Incidente cancelado'),
+                content: const Text('Se ha cancelado el incidente.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Cerrar'),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Error'),
+                content: Text(
+                    'No se pudo cancelar el incidente. Por favor, inténtelo de nuevo.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Cerrar'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }).catchError((error) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: Text(
+                  'No se pudo cancelar el incidente. Por favor, inténtelo de nuevo. Error: ${error.toString()}'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cerrar'),
+                ),
+              ],
+            );
+          },
+        );
+      });
+    } else {
+      print('incidents is null or empty.');
+    }
   }
 
   Future<bool> isLocationPermissionGranted() {
@@ -103,7 +293,8 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _requestLocationPermission() async {
-    var permission = await _locationPermissionService.requestLocationPermission();
+    var permission =
+    await _locationPermissionService.requestLocationPermission();
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
@@ -128,9 +319,10 @@ class _HomeState extends State<Home> {
 
   Future<void> _getAddressFromLatLng() async {
     if (latitude != null && longitude != null) {
-      Placemark? place = await _locationPermissionService
-          .getAddressFromLatLng(latitude!, longitude!);
-      if (place != null) {
+      List<Placemark> places =
+      await placemarkFromCoordinates(latitude!, longitude!);
+      if (places.isNotEmpty) {
+        Placemark place = places[0];
         setState(() {
           _address =
           "${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}";
@@ -140,17 +332,19 @@ class _HomeState extends State<Home> {
     }
   }
 
-  Future<void> _getPendingIncidents() async {
-    try {
-      final List<dynamic> incidents =
-      await _incidentService.getPendingIncidentsByCitizenId();
-      if (incidents.isNotEmpty) {
-        setState(() {
-          _incidents = incidents;
-        });
+  void _getPendingIncidents() async {
+    if (_authProvider.isLoggedIn) {
+      try {
+        final List<dynamic> incidents =
+        await _incidentService.getPendingIncidentsByCitizenId();
+        if (incidents.isNotEmpty) {
+          setState(() {
+            _incidents = incidents;
+          });
+        }
+      } catch (error) {
+        print('Error fetching incidents: $error');
       }
-    } catch (error) {
-      print('Error fetching incidents: $error');
     }
   }
 
@@ -219,113 +413,5 @@ class _HomeState extends State<Home> {
         _isLoading = false;
       });
     }
-  }
-}
-
-
-class AddressWidget extends StatelessWidget {
-  final String address;
-
-  const AddressWidget({
-    Key? key,
-    required this.address,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        color: Colors.grey.shade800,
-        padding: EdgeInsets.symmetric(vertical: 16.0),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Text(
-            address,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class PendingIncidentsWidget extends StatelessWidget {
-  final VoidCallback onViewIncidents;
-
-  const PendingIncidentsWidget({
-    Key? key,
-    required this.onViewIncidents,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return
-      Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        color: Colors.red,
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Se ha enviado un incidente a la autoridad local. La entidad encargada está en camino. Por favor, manténgase seguro.',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class LocationPermissionWidget extends StatelessWidget {
-  final VoidCallback onRequestPermission;
-
-  const LocationPermissionWidget({
-    Key? key,
-    required this.onRequestPermission,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        color: Colors.grey.shade800,
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'La aplicación necesita permisos de ubicación para funcionar correctamente. Por favor, habilite los permisos de ubicación en la configuración de la aplicación.',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            ElevatedButton(
-              onPressed: onRequestPermission,
-              child: Text('Configuración de localización'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -20,12 +20,8 @@ class CitizenService {
           }
       );
 
-      if (response.statusCode == 200) {
-        final dynamic jsonData = jsonDecode(response.body);
-        return jsonData;
-      } else {
-        throw Exception('Failed to load citizen with id $citizenId');
-      }
+      final dynamic jsonData = jsonDecode(response.body);
+      return jsonData;
     } catch (e) {
       String token = AuthProvider().getToken;
       throw Exception('Error fetching data: $e $token');
@@ -44,12 +40,8 @@ class CitizenService {
           }
       );
 
-      if (response.statusCode == 200) {
-        final dynamic jsonData = jsonDecode(response.body);
-        return jsonData;
-      } else {
-        throw Exception('Failed to load user with id $userId. Status Code: ${response.statusCode}');
-      }
+      final dynamic jsonData = jsonDecode(response.body);
+      return jsonData;
     } catch (e) {
       throw Exception('Error fetching data: $e');
     }

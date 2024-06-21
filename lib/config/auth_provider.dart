@@ -13,8 +13,6 @@ class AuthProvider with ChangeNotifier {
   String get getToken => _token;
   int get getUserId => _userId;
 
-  final CitizenService _citizenService = CitizenService();
-
   AuthProvider() {
     _loadLoginStatus();
   }

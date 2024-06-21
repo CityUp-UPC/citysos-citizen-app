@@ -1,8 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:citysos_citizen/views/home_view.dart';
 import 'package:citysos_citizen/views/feeds_view.dart';
 import 'package:citysos_citizen/views/news_view.dart';
 import 'package:citysos_citizen/views/user_view.dart';
-import 'package:flutter/material.dart';
+
 
 class Navbar extends StatefulWidget {
   const Navbar({Key? key}) : super(key: key);
@@ -20,6 +21,12 @@ class Navbar extends StatefulWidget {
 class _NavbarState extends State<Navbar> {
   int selectedIndex = 0;
 
+  void setIndex(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -36,12 +43,11 @@ class _NavbarState extends State<Navbar> {
         index: selectedIndex,
         children: views,
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
-        onTap: (_selectedIndex) {
+        onTap: (index) {
           setState(() {
-            selectedIndex = _selectedIndex;
+            selectedIndex = index;
           });
         },
         selectedItemColor: colors.primary,
@@ -108,11 +114,5 @@ class _NavbarState extends State<Navbar> {
         backgroundColor: colors.background,
       ),
     );
-  }
-
-  void setIndex(int index) {
-    setState(() {
-      selectedIndex = index;
-    });
   }
 }
