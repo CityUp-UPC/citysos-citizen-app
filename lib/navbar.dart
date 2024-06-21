@@ -108,7 +108,7 @@ class _NavbarState extends State<Navbar> {
                 child: Icon(Icons.person_rounded, color: colors.primary),
               ),
             ),
-            label: 'Perfil',
+            label: 'Usuario',
           ),
         ],
         backgroundColor: colors.background,
