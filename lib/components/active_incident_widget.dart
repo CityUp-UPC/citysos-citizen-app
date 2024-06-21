@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../config/location_permission_service.dart';
 import '../components/google_maps_widget.dart';
-import '../navbar.dart'; // Import your Navbar widget
+import '../navbar.dart';
+import 'package:intl/intl.dart';
 
 class ActiveIncidentWidget extends StatefulWidget {
   final dynamic incident;
@@ -30,6 +31,20 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
 
   @override
   Widget build(BuildContext context) {
+    String formattedDate = DateFormat('dd-MM-yyyy HH:mm:ss').format(DateTime.parse(widget.incident['date']));
+
+    String status = widget.incident['status'];
+
+    if (status == 'PENDIENT') {
+      status = 'Buscando ayuda';
+    }
+    if (status == 'IN_PROGRESS' || status == 'HELP_REQUIRED') {
+      status = 'Policias en camino';
+    }
+    if (status == 'COMPLETED') {
+      status = 'Resuelto';
+    }
+
     return Scaffold(
       body: Column(
         children: [
@@ -39,18 +54,6 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'Incidente activo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.0,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8.0),
                 Row(
                   children: [
                     Icon(
@@ -102,7 +105,7 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
                     const SizedBox(width: 8.0),
                     Expanded(
                       child: Text(
-                        '${widget.incident['date']}',
+                        formattedDate,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16.0,
@@ -123,7 +126,7 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
                     const SizedBox(width: 8.0),
                     Expanded(
                       child: Text(
-                        '${widget.incident['status']}',
+                        status,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16.0,
@@ -137,117 +140,70 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
               ],
             ),
           ),
-          Expanded(
-            child: Container(
-              color: Colors.white,
-              child: Center(
-                child: latitude == null || longitude == null
-                    ? CircularProgressIndicator()
-                    : GoogleMapsWidget(
-                  latitude: latitude!,
-                  longitude: longitude!,
-                  height: 200,
-                ),
+          Container(
+            height: 200, // You can adjust the height as needed
+            color: Colors.white,
+            child: Center(
+              child: latitude == null || longitude == null
+                  ? CircularProgressIndicator()
+                  : GoogleMapsWidget(
+                latitude: latitude!,
+                longitude: longitude!,
+                height: 200, // This height should match the container height
               ),
             ),
           ),
-          // Buttons to cancel the incident
-          Padding(
+          Container(
             padding: EdgeInsets.all(16.0),
             child: Column(
               children: [
-                SizedBox(
-                  width: double.infinity, // Full width button
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navbar.navigatorKey.currentState?.setIndex(1);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 20.0), // Bigger button
+                if (widget.incident['police'] == null || widget.incident['police'].isEmpty) ... [
+                  Text(
+                    'Esperando respuesta de policía',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
-                    child: const Text('Ver feed de incidente'),
                   ),
-                ),
-                const SizedBox(height: 16.0), // Space between buttons
-                SizedBox(
-                  width: double.infinity, // Full width button
-                  child: Dismissible(
-                    key: UniqueKey(),
-                    direction: DismissDirection.horizontal,
-                    confirmDismiss: (DismissDirection direction) async {
-                      bool confirm = await showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text("Confirmación"),
-                            content:
-                            const Text("¿Está seguro que desea cancelar este incidente?"),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: Text("Cancelar"),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop(true);
-                                  _cancelIncident();
-                                },
-                                child: Text("Aceptar"),
-                              ),
-                            ],
+                  const SizedBox(height: 12.0),
+                  CircularProgressIndicator(),
+                ]
+                else ... [
+                  Text(
+                    'Policias en camino',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 12.0),
+                  Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(4.0),
+                      child: Column(
+                        children: widget.incident['police'].map<Widget>((police) {
+                          String firstName = police['user']['firstName'] ?? 'N/A';
+                          String lastName = police['user']['lastName'] ?? 'N/A';
+                          String policeIdentifier = police['policeIdentifier'] ?? 'N/A';
+
+                          return ListTile(
+                            leading: Icon(Icons.person),
+                            title: Text(firstName + ' ' + lastName),
+                            subtitle: Text(policeIdentifier),
                           );
-                        },
-                      );
-                      return confirm; // Return true to dismiss, false to cancel dismiss
-                    },
-                    onDismissed: (direction) {
-                      if (direction == DismissDirection.endToStart) {
-                        _cancelIncident();
-                      }
-                    },
-                    background: Container(
-                      color: Colors.redAccent.withOpacity(0.2),
-                      child: const Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Icon(
-                            Icons.cancel,
-                            color: Colors.redAccent,
-                            size: 32.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      padding: EdgeInsets.symmetric(vertical: 20.0),
-                      child: const Center(
-                        child: Text(
-                          'Cancelar incidente',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                        }).toList(),
                       ),
                     ),
                   ),
-                ),
+                ]
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  void _cancelIncident() {
-    // Perform the cancel incident action
-    print("Incident cancelled");
-    setState(() {
-      // Update UI as needed
-    });
   }
 
   Future<bool> isLocationPermissionGranted() {

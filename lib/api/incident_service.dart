@@ -70,22 +70,17 @@ class IncidentService {
         },
       );
 
-      if (response.statusCode == 200) {
-        final dynamic jsonData = jsonDecode(response.body);
-        // Reverse the list before returning it
-        return jsonData.map((data) => {
-          'description': data['description'],
-          'date': data['date'],
-          'address': data['address'],
-          'district': data['district'],
-          'latitude': double.parse(data['latitude']),
-          'longitude': double.parse(data['longitude']),
-          'status': data['status'],
-        });
-      } else {
-        String token = AuthProvider().getToken;
-        throw Exception('Failed to load data ${token}');
-      }
+      final dynamic jsonData = jsonDecode(response.body);
+      // Reverse the list before returning it
+      return jsonData.map((data) => {
+        'description': data['description'],
+        'date': data['date'],
+        'address': data['address'],
+        'district': data['district'],
+        'latitude': double.parse(data['latitude']),
+        'longitude': double.parse(data['longitude']),
+        'status': data['status'],
+      });
     } catch (e) {
       String token = AuthProvider().getToken;
       throw Exception('Error fetching data: $e $token');
@@ -95,6 +90,7 @@ class IncidentService {
 
   Future<List<Map<String, dynamic>>> getPendingIncidents() async {
     try {
+      print('Getting pending incidents');
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String token = prefs.getString('token') ?? '';
 
@@ -105,22 +101,17 @@ class IncidentService {
         },
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = jsonDecode(response.body);
-        // Reverse the list before returning it
-        return jsonData.map((data) => {
-          'description': data['description'],
-          'date': data['date'],
-          'address': data['address'],
-          'district': data['district'],
-          'latitude': double.parse(data['latitude']),
-          'longitude': double.parse(data['longitude']),
-          'status': data['status'],
-        }).toList().reversed.toList();
-      } else {
-        String token = AuthProvider().getToken;
-        throw Exception('Failed to load data ${token}');
-      }
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      // Reverse the list before returning it
+      return jsonData.map((data) => {
+        'description': data['description'],
+        'date': data['date'],
+        'address': data['address'],
+        'district': data['district'],
+        'latitude': double.parse(data['latitude']),
+        'longitude': double.parse(data['longitude']),
+        'status': data['status'],
+      }).toList().reversed.toList();
     } catch (e) {
       String token = AuthProvider().getToken;
       throw Exception('Error fetching data: $e $token');
@@ -142,26 +133,47 @@ class IncidentService {
         },
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonData = jsonDecode(response.body);
-        List<Map<String, dynamic>> incidents = jsonData.map((data) =>
-        {
-          'description': data['description'],
-          'date': data['date'],
-          'address': data['address'],
-          'district': data['district'],
-          'latitude': double.parse(data['latitude']),
-          'longitude': double.parse(data['longitude']),
-          'status': data['status'],
-        }).toList();
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      List<Map<String, dynamic>> incidents = jsonData.map((data) =>
+      {
+        'id': data['id'],
+        'description': data['description'],
+        'date': data['date'],
+        'address': data['address'],
+        'district': data['district'],
+        'latitude': double.parse(data['latitude']),
+        'longitude': double.parse(data['longitude']),
+        'status': data['status'],
+        'police': data['police'],
+      }).toList();
 
-        return incidents.reversed.toList();
-      } else {
-        throw Exception(
-            'Failed to load pending incidents: ${response.statusCode}');
-      }
+      return incidents.reversed.toList();
     } catch (e) {
       throw Exception('Error fetching pending incidents: $e');
+    }
+  }
+
+  Future<dynamic> completeIncidentById(int id) async {
+    try {
+      print('Completing incident with id: $id');
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String token = prefs.getString('token') ?? '';
+
+      final response = await http.put(
+        Uri.parse('$apiUrlGlobal/api/v1/polices/incident/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 202) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
     }
   }
 }

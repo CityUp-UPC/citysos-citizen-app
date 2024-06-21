@@ -1,11 +1,15 @@
 import 'package:citysos_citizen/api/firebase_api.dart';
 import 'package:citysos_citizen/firebase_options.dart';
+import 'package:citysos_citizen/navbar.dart';
 import 'package:citysos_citizen/views/login_view.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:citysos_citizen/views/home_view.dart';
+import 'package:citysos_citizen/views/feeds_view.dart';
+import 'package:citysos_citizen/views/news_view.dart';
+import 'package:citysos_citizen/views/user_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/auth_provider.dart';
-import 'navbar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
