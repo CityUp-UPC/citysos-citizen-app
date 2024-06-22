@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../api/auth_service.dart';
 import 'login_view.dart';
 
@@ -26,6 +27,7 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   late List<TextEditingController> _controllers;
   String? _selectedDistrict;
+  String? _deviceToken;
   final List<String> districts = ['San Isidro', 'Pueblo Libre', 'Jesus Maria', 'San Miguel'];
 
   AuthService _authService = AuthService();
@@ -34,6 +36,13 @@ class _RegisterState extends State<Register> {
   void initState() {
     super.initState();
     _controllers = List.generate(7, (_) => TextEditingController()); // Increased to 7 for username
+    _initializeFirebase();
+  }
+
+  Future<void> _initializeFirebase() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    _deviceToken = await messaging.getToken();
+    print("Device Token: $_deviceToken");
   }
 
   @override
@@ -69,7 +78,7 @@ class _RegisterState extends State<Register> {
         password,
         phoneNumber,
         dni,
-        'deviceToken',
+        _deviceToken ?? 'no-device-token',
         _selectedDistrict!,
       );
 
