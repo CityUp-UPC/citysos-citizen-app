@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
@@ -64,6 +63,8 @@ class _UserState extends State<User> {
         'phoneNumber': phone,
       };
 
+      if (!mounted) return;
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -76,22 +77,22 @@ class _UserState extends State<User> {
 
       await citizenService.updateCitizen(userId, updateData);
 
-      if (mounted) {
-        setState(() {
-          userName = name;
-          idNumber = id;
-          email = email;
-          location = location;
-          phoneNumber = phone;
-        });
-      }
+      if (!mounted) return;
 
-      Navigator.of(context).pop(); // Cerrar el spinner de carga
-      Navigator.of(context).pop(); // Cerrar el diálogo de edición
+      setState(() {
+        userName = name;
+        idNumber = id;
+        email = email;
+        location = location;
+        phoneNumber = phone;
+      });
+
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
     } catch (e) {
       print('Error updating citizen data: $e');
       if (mounted) {
-        Navigator.of(context).pop(); // Cerrar el spinner de carga
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error updating data: $e')),
         );
@@ -106,8 +107,7 @@ class _UserState extends State<User> {
       setState(() {
         _image = File(pickedFile.path);
       });
-
-      // Aquí puedes agregar el código para subir la imagen al servidor si es necesario
+      // Aquí se puede agregar código para subir la imagen al servidor si es necesario :b
     }
   }
 
@@ -119,15 +119,13 @@ class _UserState extends State<User> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                child: Container(
+                borderRadius: const BorderRadius.all(Radius.circular(20)),
+                child: SizedBox(
                   height: 300,
+                  width: double.infinity,
                   child: PhotoView(
                     imageProvider: _image != null
                         ? FileImage(_image!)
@@ -135,23 +133,22 @@ class _UserState extends State<User> {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton.icon(
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: ElevatedButton(
                   onPressed: () {
                     setState(() {
                       _image = null;
                     });
                     Navigator.of(context).pop();
                   },
-                  icon: const Icon(Icons.delete, color: Colors.white),
-                  label: const Text('Eliminar Imagen'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(12),
                   ),
+                  child: const Icon(Icons.delete, color: Colors.white),
                 ),
               ),
             ],
@@ -176,72 +173,78 @@ class _UserState extends State<User> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: _viewImage,
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _image != null
-                        ? FileImage(_image!)
-                        : const AssetImage('assets/default_profile.jpg') as ImageProvider,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              Stack(
+                children: [
+                  GestureDetector(
+                    onTap: _viewImage,
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage: _image != null
+                          ? FileImage(_image!)
+                          : const AssetImage('assets/default_profile.jpg') as ImageProvider,
+                    ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: InkWell(
-                    onTap: _pickImage,
-                    borderRadius: BorderRadius.circular(15), // Ajuste para el borde circular del InkWell
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 16,
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: InkWell(
+                      onTap: _pickImage,
+                      borderRadius: BorderRadius.circular(15),
+                      child: Container(
+                        height: 30,
+                        width: 30,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Text(
-                userName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                ],
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Text(
+                  userName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              title: const Text('Sobre mi'),
-              trailing: TextButton(
-                onPressed: () {
-                  _showEditDialog(context);
-                },
-                child: const Text(
-                  'Editar',
-                  style: TextStyle(color: Colors.red),
-                ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Sobre mi',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _showEditDialog(context);
+                    },
+                    child: const Text(
+                      'Editar',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
+              const Divider(),
+              Column(
                 children: [
                   InfoTile(
                     icon: Icons.perm_identity,
@@ -261,50 +264,59 @@ class _UserState extends State<User> {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              title: const Text('Historial de servicios'),
-              trailing: TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'Ver más',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ),
-            const Divider(),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Card(
-                child: ListTile(
-                  leading: Icon(
-                    Icons.star,
-                    color: Colors.red,
-                    size: 40,
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Historial de servicios',
+                    style: TextStyle(fontSize: 16),
                   ),
-                  title: Text('Carla Portugal'),
-                  subtitle: Text('Finalizado - 14/04/2024'),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      'Ver más',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.star,
+                      color: Colors.red,
+                      size: 40,
+                    ),
+                    title: Text('Carla Portugal'),
+                    subtitle: Text('Finalizado - 14/04/2024'),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Provider.of<AuthProvider>(context, listen: false).logout();
-                Navigator.of(context).pushReplacementNamed('/login');
-              },
-              icon: const Icon(Icons.logout, color: Colors.white),
-              label: const Text('Cerrar Sesión'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Provider.of<AuthProvider>(context, listen: false).logout();
+                  Navigator.of(context).pushReplacementNamed('/login');
+                },
+                icon: const Icon(Icons.logout, color: Colors.white),
+                label: const Text(
+                  'Cerrar Sesión',
+                  style: TextStyle(color: Colors.white),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -318,79 +330,79 @@ class _UserState extends State<User> {
     TextEditingController phoneController = TextEditingController(text: phoneNumber);
 
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Editar Información'),
-        content: SingleChildScrollView(
-        child: Column(
-        children: [
-        TextField(
-        controller: nameController,
-        decoration: const InputDecoration(
-          labelText: 'Nombre',
-          border: OutlineInputBorder(),
-        ),
-      ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: idController,
-            decoration: const InputDecoration(
-              labelText: 'Número de Identificación',
-              border: OutlineInputBorder(),
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Editar Información'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: idController,
+                  decoration: const InputDecoration(
+                    labelText: 'Número de Identificación',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo Electrónico',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ubicación',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Número de Teléfono',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: emailController,
-            decoration: const InputDecoration(
-              labelText: 'Correo Electrónico',
-              border: OutlineInputBorder(),
+          actions: [
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: locationController,
-            decoration: const InputDecoration(
-              labelText: 'Ubicación',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: phoneController,
-            decoration: const InputDecoration(
-              labelText: 'Número de Teléfono',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ],
-        ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Cancelar'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          ElevatedButton(
-            child: const Text('Guardar'),
-            onPressed: () {
-              final userId = Provider.of<AuthProvider>(context, listen: false).getUserId;
-              _updateCitizenData(userId, nameController.text, idController.text, emailController.text, locationController.text, phoneController.text);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+            ElevatedButton(
+              onPressed: () {
+                final userId = Provider.of<AuthProvider>(context, listen: false).getUserId;
+                _updateCitizenData(userId, nameController.text, idController.text, emailController.text, locationController.text, phoneController.text);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                foregroundColor: Colors.white,
               ),
-              foregroundColor: Colors.white, // Color del texto del botón "Guardar"
+              child: const Text('Guardar'),
             ),
-          ),
-        ],
-      );
-        },
+          ],
+        );
+      },
     );
   }
 }
@@ -422,4 +434,3 @@ class InfoTile extends StatelessWidget {
     );
   }
 }
-

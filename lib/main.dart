@@ -40,6 +40,6 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
-    return authProvider.isLoggedIn ? const Navbar() : const Login();
+    return authProvider.isLoggedIn ? const Navbar() : const Navbar();
   }
 }
