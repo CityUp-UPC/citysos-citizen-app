@@ -20,8 +20,7 @@ class ActiveIncidentWidget extends StatefulWidget {
 class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
   double? latitude;
   double? longitude;
-  final LocationPermissionService _locationPermissionService =
-  LocationPermissionService();
+  final LocationPermissionService _locationPermissionService = LocationPermissionService();
 
   @override
   void initState() {
@@ -211,8 +210,7 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
   }
 
   Future<void> _requestLocationPermission() async {
-    var permission =
-    await _locationPermissionService.requestLocationPermission();
+    var permission = await _locationPermissionService.requestLocationPermission();
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
@@ -224,13 +222,18 @@ class _ActiveIncidentWidgetState extends State<ActiveIncidentWidget> {
   }
 
   Future<void> _getCurrentLocation() async {
-    Position? position =
-    await _locationPermissionService.getCurrentLocation();
-    if (position != null) {
+    Position? position = await _locationPermissionService.getCurrentLocation();
+    if (position != null && mounted) {
       setState(() {
         latitude = position.latitude;
         longitude = position.longitude;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // Cancel any ongoing tasks or subscriptions here
+    super.dispose();
   }
 }

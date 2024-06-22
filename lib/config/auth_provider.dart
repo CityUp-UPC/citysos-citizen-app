@@ -22,6 +22,7 @@ class AuthProvider with ChangeNotifier {
     _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     _token = prefs.getString('token') ?? '';
     _userId = prefs.getInt('userId') ?? 0;
+    print("TOKEN: $_token");
     if (_isLoggedIn) {
       if (JwtDecoder.isExpired(_token)) {
         _isLoggedIn = false;

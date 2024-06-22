@@ -1,3 +1,5 @@
+import 'package:citysos_citizen/main.dart';
+import 'package:citysos_citizen/views/login_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +27,7 @@ class _UserState extends State<User> {
           ElevatedButton(
             onPressed: () {
               Provider.of<AuthProvider>(context, listen: false).logout();
-              Navigator.of(context).pushReplacementNamed('/login');
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthWrapper()));
             },
             child: Text('Logout'),
           ),

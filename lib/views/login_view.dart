@@ -65,9 +65,8 @@ class _LoginState extends State<Login> {
       final response = await _authService.login(username, password, _deviceToken ?? 'no-device-token');
       print(response.body);
       final Map<String, dynamic> tokenData = jsonDecode(response.body) as Map<String, dynamic>;
-
       if (tokenData['token'] != null && tokenData['token'].toString().isNotEmpty) {
-        Provider.of<AuthProvider>(context, listen: false).login(tokenData['token'].toString());
+        Provider.of<AuthProvider>(context, listen: false).login(tokenData['token']);
       } else {
         // Show error message
         showDialog(
