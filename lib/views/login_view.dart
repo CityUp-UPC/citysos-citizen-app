@@ -80,7 +80,7 @@ class _LoginState extends State<Login> {
           });
 
           if (tokenData['token'] != null && tokenData['token'].toString().isNotEmpty) {
-            Provider.of<AuthProvider>(context, listen: false).login(tokenData['token'].toString());
+            Provider.of<AuthProvider>(context, listen: false).login(tokenData['token']);
           } else {
             _showErrorDialog('Usuario o contraseña incorrectos');
           }
