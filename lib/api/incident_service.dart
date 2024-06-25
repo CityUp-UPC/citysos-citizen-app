@@ -13,36 +13,40 @@ class IncidentService {
   final CitizenService _citizenService = CitizenService();
 
   Future<dynamic> createIncident(double latitude, double longitude, String address, String district) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String token = prefs.getString('token') ?? '';
-      int userId = prefs.getInt('userId') ?? 0;
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String token = prefs.getString('token') ?? '';
+    int userId = prefs.getInt('userId') ?? 0;
 
-      int citizenId = await _getCitizenId(userId);
+    int citizenId = await _getCitizenId(userId);
 
-      final response = await http.post(
-          Uri.parse(baseUrl),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json', // Set the correct content type
-          },
-          body: jsonEncode({
-            'description': 'Se solicita ayuda',
-            'latitude': latitude,
-            'longitude': longitude,
-            'address': address,
-            'district': district,
-            'citizenId': citizenId,
-          })
-      );
+    final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json', // Set the correct content type
+        },
+        body: jsonEncode({
+          'description': 'Se solicita ayuda',
+          'latitude': latitude.toString(),
+          'longitude': longitude.toString(),
+          'address': address,
+          'district': district,
+          'citizenId': citizenId
+        })
+    );
 
+    if (response.statusCode == 201) {
       final dynamic jsonData = jsonDecode(response.body);
       return jsonData;
-
-    } catch (e) {
-      throw Exception('Error creating incident: $e');
+    } else {
+      throw Exception('Error creating incident: ${response.statusCode} ${response.body}');
     }
+  } catch (e) {
+    throw Exception('Error creating incident: $e');
   }
+}
+
 
   Future<int> _getCitizenId(int userId) async {
     try {

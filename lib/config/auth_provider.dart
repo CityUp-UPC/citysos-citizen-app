@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-import '../api/citizen_service.dart';
 
 class AuthProvider with ChangeNotifier {
   bool _isLoggedIn = false;
@@ -17,45 +16,57 @@ class AuthProvider with ChangeNotifier {
     _loadLoginStatus();
   }
 
-  void _loadLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    _token = prefs.getString('token') ?? '';
-    _userId = prefs.getInt('userId') ?? 0;
-    print("TOKEN: $_token");
-    if (_isLoggedIn) {
-      if (JwtDecoder.isExpired(_token)) {
-        _isLoggedIn = false;
-        _userId = 0;
-        _token = '';
-        _saveLoginStatus();
+  Future<void> _loadLoginStatus() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+      _token = prefs.getString('token') ?? '';
+      _userId = prefs.getInt('userId') ?? 0;
+
+      if (_isLoggedIn && JwtDecoder.isExpired(_token)) {
+        await logout();
       }
+
+      notifyListeners();
+    } catch (e) {
+      print('Error loading login status: $e');
     }
-
-    notifyListeners();
   }
 
-  void _saveLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', _isLoggedIn);
-    await prefs.setString('token', _token);
-    await prefs.setInt('userId', _userId);
+  Future<void> _saveLoginStatus() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', _isLoggedIn);
+      await prefs.setString('token', _token);
+      await prefs.setInt('userId', _userId);
+    } catch (e) {
+      print('Error saving login status: $e');
+    }
   }
 
-  void login(tokenData) {
-    _isLoggedIn = true;
-    _token = tokenData;
-    Map<String, dynamic> decodedToken = JwtDecoder.decode(_token);
-    _userId = decodedToken['userId'];
-    _saveLoginStatus();
-    notifyListeners();
+  Future<void> login(String tokenData) async {
+    try {
+      _isLoggedIn = true;
+      _token = tokenData;
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(_token);
+
+      if (decodedToken.containsKey('userId')) {
+        _userId = decodedToken['userId'];
+        await _saveLoginStatus();
+        notifyListeners();
+      } else {
+        throw Exception('Token no válido: falta userId');
+      }
+    } catch (e) {
+      print('Error during login: $e');
+    }
   }
 
-  void logout() {
+  Future<void> logout() async {
     _isLoggedIn = false;
     _token = '';
     _userId = 0;
-    _saveLoginStatus();
+    await _saveLoginStatus();
     notifyListeners();
   }
 }
