@@ -1,7 +1,5 @@
-
 import 'dart:io';
 
-import 'package:citysos_citizen/main.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
@@ -189,7 +187,7 @@ class _UserState extends State<User> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
               Stack(
                 children: [
                   GestureDetector(
@@ -277,42 +275,12 @@ class _UserState extends State<User> {
                 ],
               ),
               const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Historial de servicios',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Ver más',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
-              ),
               const Divider(),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Card(
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.star,
-                      color: Colors.red,
-                      size: 40,
-                    ),
-                    title: Text('Carla Portugal'),
-                    subtitle: Text('Finalizado - 14/04/2024'),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 50),
               ElevatedButton.icon(
                 onPressed: () {
                   Provider.of<AuthProvider>(context, listen: false).logout();
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthWrapper()));
+                  Navigator.of(context).pushReplacementNamed('/login');
                 },
                 icon: const Icon(Icons.logout, color: Colors.white),
                 label: const Text(
