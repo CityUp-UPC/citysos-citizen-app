@@ -60,6 +60,36 @@ class IncidentService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getIncidents() async {
+    try {
+      print('Getting incidents');
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String token = prefs.getString('token') ?? '';
+
+      final response = await http.get(
+        Uri.parse('$baseUrl'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      // Reverse the list before returning it
+      return jsonData.map((data) => {
+        'description': data['description'],
+        'date': data['date'],
+        'address': data['address'],
+        'district': data['district'],
+        'latitude': double.parse(data['latitude']),
+        'longitude': double.parse(data['longitude']),
+        'status': data['status'],
+      }).toList().reversed.toList();
+    } catch (e) {
+      String token = AuthProvider().getToken;
+      throw Exception('Error fetching data: $e $token');
+    }
+  }
+
   Future<dynamic> getIncidentById(int id) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
