@@ -5,7 +5,6 @@ import '../api/incident_service.dart';
 import '../components/incident_report_box.dart';
 import 'package:intl/intl.dart';
 
-
 class MapView extends StatefulWidget {
   @override
   _MapViewState createState() => _MapViewState();
@@ -15,6 +14,7 @@ class _MapViewState extends State<MapView> {
   late GoogleMapController _controller;
   final Location _location = Location();
   final Set<Marker> _markers = {};
+  final Set<Circle> _circles = {};
   List<Incident> _incidents = [];
   final IncidentService _incidentService = IncidentService();
 
@@ -24,7 +24,10 @@ class _MapViewState extends State<MapView> {
     _location.onLocationChanged.listen((LocationData currentLocation) {
       _controller.animateCamera(
         CameraUpdate.newCameraPosition(
-          CameraPosition(target: LatLng(currentLocation.latitude!, currentLocation.longitude!), zoom: 15),
+          CameraPosition(
+            target: LatLng(currentLocation.latitude!, currentLocation.longitude!), 
+            zoom: 15,
+          ),
         ),
       );
       _fetchNearbyIncidents(currentLocation.latitude!, currentLocation.longitude!);
@@ -73,33 +76,32 @@ class _MapViewState extends State<MapView> {
                   ],
                 ),
                 SizedBox(height: 5.0),
-                if(incident.status == 'PENDIENT')
+                if (incident.status == 'PENDIENT')
                   Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('Pendiente', style: TextStyle(fontSize: 16.0)),
+                    children: [
+                      Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
+                      Text('Pendiente', style: TextStyle(fontSize: 16.0)),
                     ],
                   ),
-
-                if(incident.status == 'IN_PROGRESS')
+                if (incident.status == 'IN_PROGRESS')
                   Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('En Progreso', style: TextStyle(fontSize: 16.0)),
+                    children: [
+                      Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
+                      Text('En Progreso', style: TextStyle(fontSize: 16.0)),
                     ],
                   ),
-                if(incident.status == 'COMPLETED')
+                if (incident.status == 'COMPLETED')
                   Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('Finalizado', style: TextStyle(fontSize: 16.0)),
+                    children: [
+                      Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
+                      Text('Finalizado', style: TextStyle(fontSize: 16.0)),
                     ],
                   ),
-                if(incident.status == 'HELP_REQUIRED')
+                if (incident.status == 'HELP_REQUIRED')
                   Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('Ayuda Requerida', style: TextStyle(fontSize: 16.0)),
+                    children: [
+                      Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
+                      Text('Ayuda Requerida', style: TextStyle(fontSize: 16.0)),
                     ],
                   ),
               ],
@@ -110,22 +112,53 @@ class _MapViewState extends State<MapView> {
     );
   }
 
+  Future<BitmapDescriptor> _getCustomMarker() async {
+    return await BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(size: Size(24, 24)), // Ajusta el tamaño del marcador
+      'assets/images/small_marker.png', // Ruta de la imagen en el proyecto
+    );
+  }
+
   void _fetchNearbyIncidents(double latitude, double longitude) async {
     List<Incident> incidents = await _incidentService.fetchNearIncidents(latitude, longitude, 2);
+    BitmapDescriptor customIcon = await _getCustomMarker();
+
     setState(() {
       _incidents = incidents;
       _markers.clear();
+      _circles.clear();
+      Map<LatLng, int> incidentDensity = {};
+      
       for (var incident in incidents) {
+        LatLng position = LatLng(incident.latitude, incident.longitude);
         _markers.add(
           Marker(
             markerId: MarkerId(incident.id.toString()),
-            position: LatLng(incident.latitude, incident.longitude),
+            position: position,
+            icon: customIcon, // Usa el icono personalizado
             onTap: () {
               _showIncidentDetails(incident);
             },
           ),
         );
+        if (incidentDensity.containsKey(position)) {
+          incidentDensity[position] = incidentDensity[position]! + 1;
+        } else {
+          incidentDensity[position] = 1;
+        }
       }
+
+      incidentDensity.forEach((position, count) {
+        _circles.add(
+          Circle(
+            circleId: CircleId(position.toString()),
+            center: position,
+            radius: 20 + (count * 10), // edicion de radio
+            strokeWidth: 0,
+            fillColor: Colors.red.withOpacity(0.3 + (count * 0.1)), // Aca se cambia la opacidad 
+          ),
+        );
+      });
     });
   }
 
@@ -142,45 +175,48 @@ class _MapViewState extends State<MapView> {
         return AlertDialog(
           actionsPadding: EdgeInsets.only(right: 15.0, bottom: 10.0),
           backgroundColor: Color.fromRGBO(255, 240, 238, 1),
-          title: Text('Estadísticas de Incidentes', style: TextStyle(color: Color.fromRGBO(144, 74, 66, 1)),),
+          title: Text(
+            'Estadísticas de Incidentes',
+            style: TextStyle(color: Color.fromRGBO(144, 74, 66, 1)),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
-              children: [
-                Text('Total de incidentes: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-                Expanded(child: Text('$totalIncidents', style: TextStyle(fontSize: 16.0))),
-              ],
-            ),
-            SizedBox(height: 8.0),
-            Row(
-              children: [
-                Text('Pendientes: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-                Expanded(child: Text('${((pendingIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
-              ],
-            ),
-            SizedBox(height: 5.0),
-            Row(
-              children: [
-                Text('En Progreso: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-                Expanded(child: Text('${((inProgressIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
-              ],
-            ),
-            SizedBox(height: 5.0),
-            Row(
-              children: [
-                Text('Completados: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-                Expanded(child: Text('${((completedIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
-              ],
-            ),
-            SizedBox(height: 5.0),
-            Row(
-              children: [
-                Text('Ayuda Requerida: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
-                Expanded(child: Text('${((helpRequiredIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
-              ],
-            ),
+                children: [
+                  Text('Total de incidentes: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+                  Expanded(child: Text('$totalIncidents', style: TextStyle(fontSize: 16.0))),
+                ],
+              ),
+              SizedBox(height: 8.0),
+              Row(
+                children: [
+                  Text('Pendientes: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+                  Expanded(child: Text('${((pendingIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
+                ],
+              ),
+              SizedBox(height: 5.0),
+              Row(
+                children: [
+                  Text('En Progreso: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+                  Expanded(child: Text('${((inProgressIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
+                ],
+              ),
+              SizedBox(height: 5.0),
+              Row(
+                children: [
+                  Text('Completados: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+                  Expanded(child: Text('${((completedIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
+                ],
+              ),
+              SizedBox(height: 5.0),
+              Row(
+                children: [
+                  Text('Ayuda Requerida: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+                  Expanded(child: Text('${((helpRequiredIncidents / totalIncidents) * 100).toStringAsFixed(2)}%', style: TextStyle(fontSize: 16.0))),
+                ],
+              ),
             ],
           ),
           actions: <Widget>[
@@ -211,12 +247,16 @@ class _MapViewState extends State<MapView> {
               zoom: 2,
             ),
             markers: _markers,
+            circles: _circles,
             onMapCreated: (GoogleMapController controller) {
               _controller = controller;
               _location.getLocation().then((locationData) {
                 _controller.animateCamera(
                   CameraUpdate.newCameraPosition(
-                    CameraPosition(target: LatLng(locationData.latitude!, locationData.longitude!), zoom: 15),
+                    CameraPosition(
+                      target: LatLng(locationData.latitude!, locationData.longitude!), 
+                      zoom: 15,
+                    ),
                   ),
                 );
                 _fetchNearbyIncidents(locationData.latitude!, locationData.longitude!);
@@ -233,42 +273,3 @@ class _MapViewState extends State<MapView> {
     );
   }
 }
-
-
-
-
-/* 
-                if(incident.status == 'PENDIENT')
-                  Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('Pendiente', style: TextStyle(fontSize: 16.0)),
-                    ],
-                  ),
-
-                if(incident.status == 'IN_PROGRESS')
-                  Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('En Progreso', style: TextStyle(fontSize: 16.0)),
-                    ],
-                  ),
-                if(incident.status == 'COMPLETED')
-                  Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('Finalizado', style: TextStyle(fontSize: 16.0)),
-                    ],
-                  ),
-                if(incident.status == 'HELP_REQUIRED')
-                  Row(
-                  children: [
-                    Text('Estado: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0, color: Color.fromRGBO(144, 74, 66, 1))),
-                    Text('Ayuda Requerida', style: TextStyle(fontSize: 16.0)),
-                    ],
-                  ),
-
-
-
-
- */
