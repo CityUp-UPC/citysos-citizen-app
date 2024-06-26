@@ -1,25 +1,24 @@
-import 'package:flutter/material.dart';
-import 'package:citysos_citizen/api/incident_service.dart';
 
+import 'package:citysos_citizen/views/map_view.dart';
+import 'package:flutter/material.dart';
+import '../api/incident_service.dart';
 import '../components/incident_card.dart';
 
-class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+class History extends StatefulWidget {
+  const History({Key? key}) : super(key: key);
 
   @override
-  _HomeState createState() => _HomeState();
+  State<History> createState() => _HistoryState();
 }
 
-class _HomeState extends State<Home> {
+class _HistoryState extends State<History> {
   late Future<List<Map<String, dynamic>>> _futureIncidents;
   final _incidentService = IncidentService();
-  final List<Incident>incidents = [];
 
   @override
   void initState() {
     super.initState();
     _futureIncidents = _incidentService.getIncidents();
-
   }
 
   void _refreshIncidents() {
@@ -36,7 +35,7 @@ class _HomeState extends State<Home> {
           children: [
             IconButton(
               icon: Icon(
-                Icons.home,
+                Icons.bar_chart_outlined,
                 color: Colors.white,
               ),
               onPressed: () {
@@ -66,19 +65,17 @@ class _HomeState extends State<Home> {
             return Center(child: Text('No se han encontrado incidentes pasados'));
           } else {
             final List<Map<String, dynamic>> completedIncidents = snapshot.data!
-                  .where((incident) => incident['status'] == 'COMPLETED')
-                  .toList();
+                .where((incident) => incident['status'] == 'COMPLETED')
+                .toList();
 
             if (completedIncidents.isEmpty) {
-              return Center(
-                  child: Text('No hay incidentes completados encontrados'));
+              return Center(child: Text('No hay incidentes completados encontrados'));
             }
             return ListView.builder(
-              itemCount: snapshot.data!.length,
+              itemCount: completedIncidents.length,
               itemBuilder: (context, index) {
-                final incident = snapshot.data![index];
+                final incident = completedIncidents[index];
                 return IncidentCard(
-                  id: incident['id'],
                   description: incident['description'],
                   date: incident['date'],
                   address: incident['address'],
@@ -92,11 +89,55 @@ class _HomeState extends State<Home> {
           }
         },
       ),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: _refreshIncidents,
-        tooltip: 'Actualizar',
-        child: Icon(Icons.refresh),
+      bottomNavigationBar: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(
+                        title: Text('Mapa de calor'),
+                      ),
+                      body: MapView(), // Replace with your MapView widget
+                    ),
+                  ),
+                );
+              },
+              child: const Text(
+                'Mapa de calor',
+                style: TextStyle(fontSize: 16.0, color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10.0),
+          GestureDetector(
+            onTap: () {
+              _refreshIncidents(); // Refresh incidents
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Icon(
+                Icons.refresh,
+                color: Colors.white,
+                size: 24.0,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

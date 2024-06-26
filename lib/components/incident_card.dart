@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class IncidentCard extends StatelessWidget {
-  final int id;
   final String description;
   final String date;
   final String address;
@@ -16,7 +15,6 @@ class IncidentCard extends StatelessWidget {
 
   const IncidentCard({
     Key? key,
-    required this.id,
     required this.description,
     required this.date,
     required this.address,

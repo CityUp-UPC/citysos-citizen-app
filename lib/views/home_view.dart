@@ -105,19 +105,6 @@ class _HomeState extends State<Home> {
                   children: [
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navbar.of(context)?.setIndex(1);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                        ),
-                        child: const Text('Ver feed de incidente'),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    SizedBox(
-                      width: double.infinity,
                       child: Dismissible(
                         key: UniqueKey(),
                         direction: DismissDirection.horizontal,

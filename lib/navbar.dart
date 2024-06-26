@@ -1,6 +1,7 @@
+import 'package:citysos_citizen/views/history_view.dart';
 import 'package:flutter/material.dart';
 import 'package:citysos_citizen/views/home_view.dart';
-import 'package:citysos_citizen/views/feeds_view.dart';
+import 'package:citysos_citizen/views/news_view.dart';
 import 'package:citysos_citizen/views/news_view.dart';
 import 'package:citysos_citizen/views/user_view.dart';
 
@@ -33,8 +34,8 @@ class _NavbarState extends State<Navbar> {
 
     final views = [
       const Home(),
-      const Feeds(),
-      News(),
+      const NewsView(),
+      const History(),
       const User(),
     ];
 
@@ -69,20 +70,6 @@ class _NavbarState extends State<Navbar> {
             label: 'SOS',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.feedback_outlined),
-            activeIcon: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors.primary.withOpacity(0.2),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.feedback_rounded, color: colors.primary),
-              ),
-            ),
-            label: 'Feed',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.newspaper_outlined),
             activeIcon: Container(
               decoration: BoxDecoration(
@@ -95,6 +82,20 @@ class _NavbarState extends State<Navbar> {
               ),
             ),
             label: 'Noticias',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colors.primary.withOpacity(0.2),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(Icons.bar_chart_rounded, color: colors.primary),
+              ),
+            ),
+            label: 'Historial',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outlined),
