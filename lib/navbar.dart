@@ -34,7 +34,7 @@ class _NavbarState extends State<Navbar> {
     final views = [
       const Home(),
       const Feeds(),
-      const News(),
+      News(),
       const User(),
     ];
 

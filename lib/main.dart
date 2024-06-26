@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:citysos_citizen/api/firebase_api.dart';
 import 'package:citysos_citizen/firebase_options.dart';
 import 'package:citysos_citizen/navbar.dart';
@@ -10,6 +12,7 @@ import 'package:citysos_citizen/views/user_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/auth_provider.dart';
+import 'views/map_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +36,9 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: const AuthWrapper(),
+        routes: {
+          '/map': (context) => MapView(), // Define la ruta para la vista del mapa
+        },
       ),
     );
   }
