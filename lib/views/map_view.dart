@@ -16,6 +16,7 @@ class _MapViewState extends State<MapView> {
   final Set<Marker> _markers = {};
   final Set<Circle> _circles = {};
   List<Incident> _incidents = [];
+  bool _isMarkerVisible = false;
   final IncidentService _incidentService = IncidentService();
 
   @override
@@ -112,35 +113,29 @@ class _MapViewState extends State<MapView> {
     );
   }
 
-  Future<BitmapDescriptor> _getCustomMarker() async {
-    return await BitmapDescriptor.fromAssetImage(
-      ImageConfiguration(size: Size(24, 24)), // Ajusta el tamaño del marcador
-      'assets/images/small_marker.png', // Ruta de la imagen en el proyecto
-    );
-  }
 
   void _fetchNearbyIncidents(double latitude, double longitude) async {
     List<Incident> incidents = await _incidentService.fetchNearIncidents(latitude, longitude, 2);
-    BitmapDescriptor customIcon = await _getCustomMarker();
 
     setState(() {
       _incidents = incidents;
       _markers.clear();
       _circles.clear();
       Map<LatLng, int> incidentDensity = {};
-      
+
       for (var incident in incidents) {
         LatLng position = LatLng(incident.latitude, incident.longitude);
         _markers.add(
           Marker(
             markerId: MarkerId(incident.id.toString()),
-            position: position,
-            icon: customIcon, // Usa el icono personalizado
+            position: LatLng(incident.latitude, incident.longitude),
+            visible: _isMarkerVisible,
             onTap: () {
               _showIncidentDetails(incident);
             },
           ),
         );
+
         if (incidentDensity.containsKey(position)) {
           incidentDensity[position] = incidentDensity[position]! + 1;
         } else {
@@ -153,14 +148,15 @@ class _MapViewState extends State<MapView> {
           Circle(
             circleId: CircleId(position.toString()),
             center: position,
-            radius: 20 + (count * 10), // edicion de radio
+            radius: 30 + (count * 10), // Edit the radius
             strokeWidth: 0,
-            fillColor: Colors.red.withOpacity(0.3 + (count * 0.1)), // Aca se cambia la opacidad 
+            fillColor: Colors.red.withOpacity(0.3 + (count * 0.1)), // Change the opacity here
           ),
         );
       });
     });
   }
+
 
   void _showIncidentStats() {
     int totalIncidents = _incidents.length;
@@ -233,43 +229,84 @@ class _MapViewState extends State<MapView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Reporte de Incidentes', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red,
-      ),
-      body: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: LatLng(0, 0),
-              zoom: 2,
-            ),
-            markers: _markers,
-            circles: _circles,
-            onMapCreated: (GoogleMapController controller) {
-              _controller = controller;
-              _location.getLocation().then((locationData) {
-                _controller.animateCamera(
-                  CameraUpdate.newCameraPosition(
-                    CameraPosition(
-                      target: LatLng(locationData.latitude!, locationData.longitude!), 
-                      zoom: 15,
-                    ),
+Widget build(BuildContext context) {
+  return Scaffold(
+        body: Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: LatLng(0, 0),
+            zoom: 2,
+          ),
+          markers: _markers,
+          circles: _circles,
+          onMapCreated: (GoogleMapController controller) {
+            _controller = controller;
+            _location.getLocation().then((locationData) {
+              _controller.animateCamera(
+                CameraUpdate.newCameraPosition(
+                  CameraPosition(
+                    target: LatLng(locationData.latitude!, locationData.longitude!), 
+                    zoom: 15,
                   ),
-                );
-                _fetchNearbyIncidents(locationData.latitude!, locationData.longitude!);
-              });
-            },
-            myLocationEnabled: true,
+                ),
+              );
+              _fetchNearbyIncidents(locationData.latitude!, locationData.longitude!);
+            });
+          },
+          myLocationEnabled: true,
+        ),
+        IncidentReportBox(
+          incidentCount: _incidents.length,
+          onTap: _showIncidentStats,
+        ),
+        Positioned(
+          left: 20,
+          bottom: 30,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Color.fromRGBO(255, 240, 238, 1), // Background color similar to modal
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.all(8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Mostrar Marcadores', style: TextStyle(color: Color.fromRGBO(144, 74, 66, 1), fontWeight: FontWeight.bold)),
+                Switch(
+                  value: _isMarkerVisible,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _isMarkerVisible = value;
+                      _updateMarkers();
+                    });
+                  },
+                  activeColor: Colors.red,
+                ),
+              ],
+            ),
           ),
-          IncidentReportBox(
-            incidentCount: _incidents.length,
-            onTap: _showIncidentStats,
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
+void _updateMarkers() {
+  setState(() {
+    _markers.clear();
+    for (var incident in _incidents) {
+      _markers.add(
+        Marker(
+          markerId: MarkerId(incident.id.toString()),
+          position: LatLng(incident.latitude, incident.longitude),
+          visible: _isMarkerVisible,
+          onTap: () {
+            _showIncidentDetails(incident);
+          },
+        ),
+      );
+    }
+  });
+}
 }

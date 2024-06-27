@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:citysos_citizen/main.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_view/photo_view.dart';
@@ -280,7 +281,8 @@ class _UserState extends State<User> {
               ElevatedButton.icon(
                 onPressed: () {
                   Provider.of<AuthProvider>(context, listen: false).logout();
-                  Navigator.of(context).pushReplacementNamed('/login');
+                  //Navigator.of(context).pushReplacementNamed('/login');
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthWrapper()));
                 },
                 icon: const Icon(Icons.logout, color: Colors.white),
                 label: const Text(

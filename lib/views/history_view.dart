@@ -92,30 +92,35 @@ class _HistoryState extends State<History> {
       bottomNavigationBar: Row(
         children: [
           Expanded(
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Scaffold(
-                      appBar: AppBar(
-                        title: Text('Mapa de calor'),
-                      ),
-                      body: MapView(), // Replace with your MapView widget
-                    ),
+            child: Container(
+              margin: const EdgeInsets.only(left: 10.0, top: 10.0, bottom: 10.0),  // Añade margen alrededor del botón
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                );
-              },
-              child: const Text(
-                'Mapa de calor',
-                style: TextStyle(fontSize: 16.0, color: Colors.white),
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        appBar: AppBar(
+                          iconTheme: IconThemeData(color: Colors.white),
+                          title: Text('Mapa de Calor', style: TextStyle(color: Colors.white)),
+                          backgroundColor: Colors.red,
+                        ),
+                        body: MapView(), // Replace with your actual MapView widget
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Mapa de calor',
+                  style: TextStyle(fontSize: 16.0, color: Colors.white),
+                ),
               ),
             ),
           ),
@@ -126,6 +131,7 @@ class _HistoryState extends State<History> {
             },
             child: Container(
               padding: const EdgeInsets.all(10.0),
+              margin: const EdgeInsets.only(right: 10.0),
               decoration: BoxDecoration(
                 color: Colors.grey,
                 borderRadius: BorderRadius.circular(8.0),
