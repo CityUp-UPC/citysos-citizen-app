@@ -104,7 +104,7 @@ class _NewsViewState extends State<NewsView> {
 
                 return GestureDetector(
                   onTap: () {
-                    _showCommentsDialog(newsItem);
+
                   },
                   child: Card(
                     elevation: 4,

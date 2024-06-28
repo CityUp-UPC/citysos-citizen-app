@@ -198,11 +198,7 @@ class IncidentService {
         },
       );
 
-      if (response.statusCode == 202) {
-        return true;
-      } else {
-        return false;
-      }
+      return response;
     } catch (e) {
       throw Exception('Error: $e');
     }

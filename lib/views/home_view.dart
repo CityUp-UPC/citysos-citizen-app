@@ -201,6 +201,16 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _isLoading = true;
+          });
+          _getPendingIncidents(); // Refresh incidents when floating button is pressed
+        },
+        tooltip: 'Refrescar',
+        child: Icon(Icons.refresh),
+      ),
     );
   }
 
@@ -208,48 +218,27 @@ class _HomeState extends State<Home> {
     if (_incidents != null && _incidents!.isNotEmpty) {
       int? incidentId = _incidents![0]['id'] as int?;
       _incidentService.completeIncidentById(incidentId as int).then((response) {
-        if (response == true) {
-          setState(() {
-            _incidents = null;
-          });
-          _getPendingIncidents();
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Incidente cancelado'),
-                content: const Text('Se ha cancelado el incidente.'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Cerrar'),
-                  ),
-                ],
-              );
-            },
-          );
-        } else {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Error'),
-                content: Text(
-                    'No se pudo cancelar el incidente. Por favor, inténtelo de nuevo.'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Cerrar'),
-                  ),
-                ],
-              );
-            },
-          );
-        }
+        setState(() {
+          _incidents = null;
+        });
+        _getPendingIncidents();
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Incidente cancelado'),
+              content: const Text('Se ha cancelado el incidente.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cerrar'),
+                ),
+              ],
+            );
+          },
+        );
       }).catchError((error) {
         showDialog(
           context: context,
@@ -306,13 +295,11 @@ class _HomeState extends State<Home> {
 
   Future<void> _getAddressFromLatLng() async {
     if (latitude != null && longitude != null) {
-      List<Placemark> places =
-      await placemarkFromCoordinates(latitude!, longitude!);
+      List<Placemark> places = await placemarkFromCoordinates(latitude!, longitude!);
       if (places.isNotEmpty) {
         Placemark place = places[0];
         setState(() {
-          _address =
-          "${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}";
+          _address = "${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}";
           _district = place.subAdministrativeArea;
         });
       }
